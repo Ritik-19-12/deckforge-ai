@@ -18,11 +18,11 @@ export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
       setIsSubmitting(provider)
       await authClient.signIn.social({
         provider,
+        callbackURL: redirectTo || '/',
         fetchOptions: {
           onSuccess: () => {
             toast.success('Logged in successfully!')
-            // const internalRedirect = toInternalPath(redirectTo)
-            navigate({ to:"/" })
+            navigate({ to: redirectTo || '/' })
           },
           onError: ({ error }) => {
             toast.error(error.message || 'Failed to login. Please try again.')

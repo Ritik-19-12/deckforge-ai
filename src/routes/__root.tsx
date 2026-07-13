@@ -1,7 +1,10 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
-
+import {
+  HeadContent,
+  Scripts,
+  Outlet,
+  createRootRoute,
+} from '@tanstack/react-router'
+import Navbar from '../components/navbar'
 
 import appCss from '../styles.css?url'
 import { Toaster } from '#/components/ui/sonner'
@@ -29,8 +32,17 @@ export const Route = createRootRoute({
       },
     ],
   }),
+  component: RootLayout,
   shellComponent: RootDocument,
 })
+function RootLayout() {
+  return (
+    <div className="min-h-svh">
+      <Navbar />
+      <Outlet />
+    </div>
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
@@ -39,11 +51,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
-      <body >
-       
+      <body className="font-sans antialiased bg-background text-foreground selection:bg-primary/20">
         {children}
-       
-        <Toaster/>
+
+        <Toaster />
         <Scripts />
       </body>
     </html>
