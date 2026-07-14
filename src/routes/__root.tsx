@@ -34,6 +34,7 @@ export const Route = createRootRoute({
   }),
   component: RootLayout,
   shellComponent: RootDocument,
+  notFoundComponent: NotFound,
 })
 function RootLayout() {
   return (
@@ -58,5 +59,16 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  )
+}
+
+function NotFound() {
+  return (
+    <main className="min-h-[60vh] flex items-center justify-center p-8">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold">404 — Not Found</h1>
+        <p className="mt-2 text-muted-foreground">The page you&apos;re looking for doesn&apos;t exist.</p>
+      </div>
+    </main>
   )
 }

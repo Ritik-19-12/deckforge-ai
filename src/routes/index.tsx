@@ -1,25 +1,255 @@
 import { getSession } from '#/lib/auth.functions'
 import { createFileRoute, redirect } from '@tanstack/react-router'
+import { useState } from 'react'
+
+import { Label } from '#/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
+import { Slider } from '#/components/ui/slider'
+import { Textarea } from '#/components/ui/textarea'
+import { Button } from '#/components/ui/button'
+import { Wand2 } from 'lucide-react'
+
+import {
+  LAYOUT_OPTIONS,
+  SLIDE_STYLES,
+  TONE_OPTIONS,
+} from '../features/presentations/constants/presentation-options'
+
+import { PRESENTATION_TEMPLATES } from '../features/presentations/constants/presentation-templates'
+
+type HomeFormState = {
+  content: string
+  slideCount: number
+  style: (typeof SLIDE_STYLES)[number]['value']
+  tone: (typeof TONE_OPTIONS)[number]['value']
+  layout: (typeof LAYOUT_OPTIONS)[number]['value']
+}
 
 export const Route = createFileRoute('/')({
   beforeLoad: async ({ location }) => {
     const session = await getSession()
+
     if (!session) {
       throw redirect({
         to: '/login',
-        search: { redirect: location.href },
+        search: {
+          redirect: location.href,
+        },
       })
     }
+
     return { user: session.user }
   },
   component: App,
 })
 
 function App() {
+  const [form, setForm] = useState<HomeFormState>({
+    content: '',
+    slideCount: 8,
+    style: 'minimal',
+    tone: 'formal',
+    layout: 'balanced',
+  })
+
   return (
     <main className="min-h-screen pt-24 pb-12 px-4">
       <div className="max-w-4xl mx-auto">
-        <h1>hello world</h1>
+        {/* Header */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-bold mb-3">
+            What do you want to{' '}
+            <span className="text-gradient-peach">create?</span>
+          </h1>
+
+          <p className="text-muted-foreground text-lg">
+            Enter your content and we'll generate a beautiful presentation
+          </p>
+        </div>
+
+        {/* Main card */}
+        <div className="glass rounded-3xl p-6 md:p-8 space-y-6">
+          {/* Textarea */}
+          <div className="space-y-2">
+            <Textarea
+              placeholder="Describe your presentation topic, paste your notes, or outline your key points..."
+              value={form.content}
+              onChange={(e) =>
+                setForm((s) => ({
+                  ...s,
+                  content: e.target.value,
+                }))
+              }
+              className="h-50 min-h-200px max-h-200px overflow-y-auto text-base bg-background/50 border-border/50 rounded-2xl resize-none focus-visible:ring-primary/30"
+            />
+
+            <div className="flex justify-between text-xs text-muted-foreground px-1">
+              <span>{form.content.length.toLocaleString()} characters</span>
+              <span>Markdown supported</span>
+            </div>
+          </div>
+
+          {/* Options */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Slide Count */}
+            <div className="space-y-2.5">
+              <Label className="text-sm font-medium">
+                Slides: {form.slideCount}
+              </Label>
+
+              <Slider
+                value={[form.slideCount]}
+                onValueChange={(value) =>
+                  setForm((s) => ({
+                    ...s,
+                    slideCount: Array.isArray(value) ? value[0] : value,
+                  }))
+                }
+                min={3}
+                max={20}
+                step={1}
+                className="py-2"
+              />
+            </div>
+
+            {/* Style */}
+            <div className="space-y-2.5">
+              <Label className="text-sm font-medium">Style</Label>
+
+              <Select
+                value={form.style}
+                onValueChange={(value) =>
+                  setForm((s) => ({
+                    ...s,
+                    style: value as HomeFormState['style'],
+                  }))
+                }
+              >
+                <SelectTrigger className="bg-background/50 border-border/50 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+
+                <SelectContent className="glass">
+                  {SLIDE_STYLES.map((style) => (
+                    <SelectItem key={style.value} value={style.value}>
+                      {style.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Tone */}
+            <div className="space-y-2.5">
+              <Label className="text-sm font-medium">Tone</Label>
+
+              <Select
+                value={form.tone}
+                onValueChange={(value) =>
+                  setForm((s) => ({
+                    ...s,
+                    tone: value as HomeFormState['tone'],
+                  }))
+                }
+              >
+                <SelectTrigger className="bg-background/50 border-border/50 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+
+                <SelectContent className="glass">
+                  {TONE_OPTIONS.map((tone) => (
+                    <SelectItem key={tone.value} value={tone.value}>
+                      {tone.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Layout */}
+            <div className="space-y-2.5">
+              <Label className="text-sm font-medium">Layout</Label>
+
+              <Select
+                value={form.layout}
+                onValueChange={(value) =>
+                  setForm((s) => ({
+                    ...s,
+                    layout: value as HomeFormState['layout'],
+                  }))
+                }
+              >
+                <SelectTrigger className="bg-background/50 border-border/50 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+
+                <SelectContent className="glass">
+                  {LAYOUT_OPTIONS.map((layout) => (
+                    <SelectItem key={layout.value} value={layout.value}>
+                      {layout.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Generate button */}
+          <div className="flex justify-end pt-2 ">
+            <Button
+              size="lg"
+              // onClick={()=>{}}
+              // disabled={}
+              className="rounded-xl px-8 gap-2 font-semibold cursor-pointer"
+            >
+              {/* {createMut.isPending ? (
+                <>
+                  <Sparkles className="size-5 animate-pulse" />
+                  Creating…
+                </>
+              ) : (
+                <> */}
+              <Wand2 className="size-5" />
+              Generate PPT
+              {/* </>
+              )} */}
+            </Button>
+          </div>
+        </div> 
+                {/* Templates */}
+        <div className="mt-8">
+          <p className="text-center text-sm text-muted-foreground mb-3">
+            Try a template
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {PRESENTATION_TEMPLATES.map((template) => (
+              <button
+                key={template.id}
+                type="button"
+                onClick={() => {
+                  setForm({
+                    content: template.content,
+                    slideCount: template.slides,
+                    style: template.style,
+                    tone: template.tone,
+                    layout: template.layout,
+                  })
+                }}
+                className="px-4 py-2 text-sm rounded-full border border-border/50 bg-card/50 text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-primary/5 transition-all"
+              >
+                {template.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+
       </div>
     </main>
   )
