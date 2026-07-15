@@ -4,6 +4,8 @@ import {
   Outlet,
   createRootRoute,
 } from '@tanstack/react-router'
+import { useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Navbar from '../components/navbar'
 
 import appCss from '../styles.css?url'
@@ -37,11 +39,15 @@ export const Route = createRootRoute({
   notFoundComponent: NotFound,
 })
 function RootLayout() {
+  const [queryClient] = useState(() => new QueryClient())
+
   return (
-    <div className="min-h-svh">
-      <Navbar />
-      <Outlet />
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <div className="min-h-svh">
+        <Navbar />
+        <Outlet />
+      </div>
+    </QueryClientProvider>
   )
 }
 
