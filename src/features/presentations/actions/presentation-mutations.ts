@@ -7,6 +7,7 @@ import { authMiddleware } from "#/middleware/auth";
 import { prisma } from "#/lib/db";
 import { generateSlug } from "random-word-slugs";
 import { PresentationStatus } from "#/generated/prisma/browser";
+import { inngest } from "#/inngest/client";
 
 // Create Presentation
 export const createPresentation = createServerFn({
@@ -31,7 +32,10 @@ export const createPresentation = createServerFn({
                 status: PresentationStatus.COMPLETED,
             },
         });
-
+        await inngest.send({
+            name:"presnetation/generate",
+            data:{presentationId:presentation.id}
+        })
         return presentation;
     });
 
