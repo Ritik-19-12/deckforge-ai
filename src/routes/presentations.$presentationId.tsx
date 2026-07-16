@@ -1,12 +1,7 @@
-import { getSession } from '@/lib/auth.functions'
-import {
-  LAYOUT_OPTIONS,
-  SLIDE_STYLES,
-  TONE_OPTIONS,
-  presentationThumbnailUrl,
-  useFullscreen,
-  usePresentationDetail,
-} from '#/features/presentations'
+import { usePresentationDetail } from '#/features/presentations/hooks/use-presentation-detail'
+import { LAYOUT_OPTIONS, SLIDE_STYLES, TONE_OPTIONS } from '#/features/presentations/constants/presentation-options'
+import { presentationThumbnailUrl } from '#/features/presentations/utils/thumbnail-url'
+import { useFullscreen } from '#/features/presentations/hooks/use-fullscreen'
 import { GenerationStatus } from '#/features/presentations/components/generation-status'
 import { SlideCard } from '#/features/presentations/components/slide-card'
 import { SlidePreview } from '#/features/presentations/components/slide-preview'
@@ -35,7 +30,7 @@ import { Textarea } from '#/components/ui/textarea'
 import {
   createFileRoute,
   Link,
-  redirect,
+  // redirect,
   useNavigate,
 } from '@tanstack/react-router'
 import {
@@ -49,10 +44,10 @@ import {
   Save,
   Trash2,
 } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { SlideshowModal } from '#/features/presentations/components/slideshow-modal'
-import { exportToPptx } from '#/features/presentations/lib/export-pptx'
+import { exportToPptx } from '#/features/presentations/utils/export-pptx'
 
 export const Route = createFileRoute('/presentations/$presentationId')({
   component: RouteComponent,
@@ -61,16 +56,32 @@ export const Route = createFileRoute('/presentations/$presentationId')({
 function RouteComponent() {
   const { presentationId } = Route.useParams()
   const navigate = useNavigate()
-  const [activSlideIndex, setActiveSlideIndex] = useState(0)
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0)
   const [showSettings, setShowSettings] = useState(false)
   const [showSlideshow, setShowSlideshow] = useState(false)
-  const [isExporting, setShowisExporting] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+
+  const { isFullscreen, toggleFullscreen } = useFullscreen(
+    'slide-preview-container',
+  )
+
+  const handleExportPptx = async () => {
+    if (!data) return
+    setIsExporting(true)
+    try {
+      await exportToPptx(data.title, slides)
+      toast.success('Presentation exported successfully!')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not export presentation')
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   const {
     query,
     slides,
     isGenerating,
-    updatedLabel,
     form,
     setForm,
     updateMut,
@@ -105,9 +116,18 @@ function RouteComponent() {
       </main>
     )
   }
- const data=query.data;
- const thumb = presentationThumbnailUrl(data?.id!)
- const activeSlide = slides.at(activSlideIndex)
+  const data = query.data
+  if (!data) {
+    return (
+      <main className="min-h-screen pt-24 pb-12 px-4">
+        <div className="max-w-6xl mx-auto text-muted-foreground">
+          Presentation not found.
+        </div>
+      </main>
+    )
+  }
+  const thumb = presentationThumbnailUrl(data.id)
+  const activeSlide = slides.at(activeSlideIndex)
   return (
     <main className="min-h-screen pt-24 pb-12 px-4">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -124,12 +144,11 @@ function RouteComponent() {
                 Home
               </Link>
             </Button>
-            <GenerationStatus status={data?.status!}/>
+            <GenerationStatus status={data?.status!} />
           </div>
         </div>
 
-
-          <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1 space-y-4">
             <div className="glass rounded-2xl p-4 flex items-center gap-4">
               <img
@@ -161,7 +180,7 @@ function RouteComponent() {
                       variant="outline"
                       size="sm"
                       className="rounded-xl gap-1"
-                      // onClick={handleExportPptx}
+                      onClick={handleExportPptx}
                       disabled={isExporting}
                     >
                       <Download className="size-4" />
@@ -225,7 +244,7 @@ function RouteComponent() {
                         prompt: e.target.value,
                       }))
                     }
-                    className="min-h-[120px] text-sm bg-background/50 border-border/50 rounded-xl resize-y"
+                    className="min-h-30 text-sm bg-background/50 border-border/50 rounded-xl resize-y"
                   />
                 </div>
 
@@ -236,12 +255,13 @@ function RouteComponent() {
                     </Label>
                     <Slider
                       value={[form.slideCount]}
-                      onValueChange={([v]) =>
+                      onValueChange={(v) => {
+                        const count = Array.isArray(v) ? v[0] : v
                         setForm((s) => ({
                           ...s,
-                          slideCount: v,
+                          slideCount: count,
                         }))
-                      }
+                      }}
                       min={3}
                       max={20}
                       step={1}
@@ -255,7 +275,8 @@ function RouteComponent() {
                       onValueChange={(value) =>
                         setForm((s) => ({
                           ...s,
-                          style: value as (typeof SLIDE_STYLES)[number]['value'],
+                          style:
+                            value as (typeof SLIDE_STYLES)[number]['value'],
                         }))
                       }
                     >
@@ -301,7 +322,8 @@ function RouteComponent() {
                       onValueChange={(value) =>
                         setForm((s) => ({
                           ...s,
-                          layout: value as (typeof LAYOUT_OPTIONS)[number]['value'],
+                          layout:
+                            value as (typeof LAYOUT_OPTIONS)[number]['value'],
                         }))
                       }
                     >
@@ -321,7 +343,7 @@ function RouteComponent() {
 
                 <div className="flex flex-wrap justify-between gap-3 pt-2">
                   <AlertDialog>
-                    <AlertDialogTrigger asChild>
+                    <AlertDialogTrigger>
                       <Button
                         type="button"
                         variant="destructive"
@@ -335,7 +357,9 @@ function RouteComponent() {
                     </AlertDialogTrigger>
                     <AlertDialogContent className="glass">
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Delete presentation?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                          Delete presentation?
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
                           This action cannot be undone. This will permanently
                           delete your presentation and all its slides.
@@ -375,7 +399,10 @@ function RouteComponent() {
             {activeSlide && (
               <div className="space-y-3">
                 <div id="slide-preview-container" className="relative group">
-                  <SlidePreview slide={activeSlide} isFullscreen={isFullscreen} />
+                  <SlidePreview
+                    slide={activeSlide}
+                    isFullscreen={isFullscreen}
+                  />
                   <Button
                     variant="secondary"
                     size="icon"

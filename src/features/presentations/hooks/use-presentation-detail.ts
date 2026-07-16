@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 
 import type { SlideLayout, SlideStyle, SlideTone } from '../constants/presentation-options'
 import { presentationQueryKeys } from '#/features/presentations/hooks/query-keys'
-// import { getPresentationWithSlides } from '#/features/presentations/actions/presentation-queries'
+import { getPresentationWithSlides } from '#/features/presentations/actions/presentation-query'
 
 import {
   deletePresentation,
@@ -51,9 +51,9 @@ export function usePresentationDetail(
       title: query.data.title,
       prompt: query.data.prompt,
       slideCount: query.data.slideCount,
-      style: query.data.style,
-      tone: query.data.tone,
-      layout: query.data.layout,
+      style: query.data.style as SlideStyle,
+      tone: query.data.tone as SlideTone,
+      layout: query.data.layout as SlideLayout,
     })
   }, [query.data])
 

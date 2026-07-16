@@ -28,6 +28,11 @@ import { createPresentation } from '#/features/presentations/actions/presentatio
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { Sparkles } from 'lucide-react'
+// import { PresentationScalarFieldEnum } from '#/generated/prisma/internal/prismaNamespace'
+import { listPresentations } from '#/features/presentations/actions/presentation-query'
+import { useQuery } from '@tanstack/react-query'
+import { PresentationListSection } from '#/features/presentations/components/presentation-list-section'
+
 type HomeFormState = {
   content: string
   slideCount: number
@@ -64,7 +69,10 @@ function App() {
     tone: 'formal',
     layout: 'balanced',
   })
-
+  const { data: presentation = [], isPending: listPending } = useQuery({
+    queryKey: presentationQueryKeys.list(),
+    queryFn: () => listPresentations(),
+  })
   const createMut = useMutation({
     mutationFn: () =>
       createPresentation({
@@ -85,11 +93,13 @@ function App() {
       })
     },
     onError: (e) => {
-      toast.error(e instanceof Error ? e.message : 'Could not create presentation')
+      toast.error(
+        e instanceof Error ? e.message : 'Could not create presentation',
+      )
     },
   })
 
-   const handleGenerate = () => {
+  const handleGenerate = () => {
     if (!form.content.trim()) {
       toast.error('Please enter your content first')
       return
@@ -100,6 +110,11 @@ function App() {
   return (
     <main className="min-h-screen pt-24 pb-12 px-4">
       <div className="max-w-4xl mx-auto">
+        <PresentationListSection
+          presentations={presentation}
+          isPending={listPending}
+        />
+
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-3">
@@ -260,8 +275,8 @@ function App() {
               )}
             </Button>
           </div>
-        </div> 
-                {/* Templates */}
+        </div>
+        {/* Templates */}
         <div className="mt-8">
           <p className="text-center text-sm text-muted-foreground mb-3">
             Try a template
@@ -287,8 +302,6 @@ function App() {
             ))}
           </div>
         </div>
-
-
       </div>
     </main>
   )
