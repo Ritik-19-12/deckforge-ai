@@ -8,12 +8,13 @@ import { prisma } from "#/lib/db";
 import { generateSlug } from "random-word-slugs";
 import { PresentationStatus } from "#/generated/prisma/browser";
 import { inngest } from "#/inngest/client";
+import { executeGeneration } from "#/inngest/functions";
 
 // Create Presentation
 export const createPresentation = createServerFn({
     method: "POST",
 })
-    .inputValidator((data: unknown) =>
+    .validator((data: unknown) =>
         createPresentationInputSchema.parse(data)
     )
     .middleware([authMiddleware])
@@ -29,13 +30,24 @@ export const createPresentation = createServerFn({
                 style: data.style,
                 tone: data.tone,
                 layout: data.layout,
-                status: PresentationStatus.COMPLETED,
+                status: PresentationStatus.GENERATING,
             },
         });
-        await inngest.send({
-            name:"presnetation/generate",
-            data:{presentationId:presentation.id}
-        })
+        try {
+            await inngest.send({
+                name: "presentation/generate",
+                data: { presentationId: presentation.id }
+            });
+        } catch (e) {
+            console.warn("Inngest send event failed, falling back to direct background execution:", e);
+            executeGeneration(presentation.id).catch(err => {
+                console.error("Direct generation failed:", err);
+                prisma.presentation.update({
+                    where: { id: presentation.id },
+                    data: { status: PresentationStatus.FAILED }
+                }).catch(() => {});
+            });
+        }
         return presentation;
     });
 
@@ -43,7 +55,7 @@ export const createPresentation = createServerFn({
 export const updatePresentation = createServerFn({
     method: "POST",
 })
-    .inputValidator((data: unknown) =>
+    .validator((data: unknown) =>
         updatePresentationInputSchema.parse(data)
     )
     .middleware([authMiddleware])
@@ -73,7 +85,7 @@ export const updatePresentation = createServerFn({
 export const deletePresentation = createServerFn({
     method: "POST",
 })
-    .inputValidator((data: unknown) =>
+    .validator((data: unknown) =>
         updatePresentationInputSchema.pick({ id: true }).parse(data)
     )
     .middleware([authMiddleware])
@@ -106,7 +118,7 @@ export const deletePresentation = createServerFn({
 export const regeneratePresentation = createServerFn({
     method: "POST",
 })
-    .inputValidator((data: unknown) =>
+    .validator((data: unknown) =>
         updatePresentationInputSchema.pick({ id: true }).parse(data)
     )
     .middleware([authMiddleware])
@@ -132,6 +144,22 @@ export const regeneratePresentation = createServerFn({
                 status: PresentationStatus.GENERATING,
             },
         });
+
+        try {
+            await inngest.send({
+                name: "presentation/generate",
+                data: { presentationId: data.id }
+            });
+        } catch (e) {
+            console.warn("Inngest send event failed on regeneration, falling back to direct background execution:", e);
+            executeGeneration(data.id).catch(err => {
+                console.error("Direct generation failed:", err);
+                prisma.presentation.update({
+                    where: { id: data.id },
+                    data: { status: PresentationStatus.FAILED }
+                }).catch(() => {});
+            });
+        }
 
         return {
             ok: true as const,

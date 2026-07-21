@@ -1,5 +1,5 @@
 import { getSession } from '#/lib/auth.functions'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
 import { Label } from '#/components/ui/label'
@@ -13,7 +13,7 @@ import {
 import { Slider } from '#/components/ui/slider'
 import { Textarea } from '#/components/ui/textarea'
 import { Button } from '#/components/ui/button'
-import { Wand2 } from 'lucide-react'
+import { Sparkles, Wand2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   LAYOUT_OPTIONS,
@@ -22,15 +22,10 @@ import {
 } from '../features/presentations/constants/presentation-options'
 
 import { PRESENTATION_TEMPLATES } from '../features/presentations/constants/presentation-templates'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { presentationQueryKeys } from '#/features/presentations/hooks/query-keys'
 import { createPresentation } from '#/features/presentations/actions/presentation-mutations'
-import { useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
-import { Sparkles } from 'lucide-react'
-// import { PresentationScalarFieldEnum } from '#/generated/prisma/internal/prismaNamespace'
 import { listPresentations } from '#/features/presentations/actions/presentation-query'
-import { useQuery } from '@tanstack/react-query'
 import { PresentationListSection } from '#/features/presentations/components/presentation-list-section'
 
 type HomeFormState = {
@@ -84,12 +79,12 @@ function App() {
           layout: form.layout,
         },
       }),
-    onSuccess: (presentation) => {
+    onSuccess: (createdPresentation) => {
       toast.success('Presentation created')
       queryClient.invalidateQueries({ queryKey: presentationQueryKeys.list() })
       navigate({
         to: '/presentations/$presentationId',
-        params: { presentationId: presentation.id },
+        params: { presentationId: createdPresentation.id },
       })
     },
     onError: (e) => {

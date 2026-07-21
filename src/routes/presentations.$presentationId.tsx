@@ -109,7 +109,7 @@ function RouteComponent() {
           <p className="text-destructive">
             {error instanceof Error ? error.message : 'Something went wrong'}
           </p>
-          <Button /*asChild*/ variant="outline" className="rounded-xl">
+          <Button variant="outline" className="rounded-xl">
             <Link to="/">Back home</Link>
           </Button>
         </div>
@@ -144,7 +144,7 @@ function RouteComponent() {
                 Home
               </Link>
             </Button>
-            <GenerationStatus status={data?.status!} />
+            <GenerationStatus status={data.status} />
           </div>
         </div>
 
