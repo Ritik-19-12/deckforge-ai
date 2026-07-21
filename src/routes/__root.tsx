@@ -16,15 +16,17 @@ const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getIte
 export const Route = createRootRoute({
   head: () => ({
     meta: [
-      {
-        charSet: 'utf-8',
-      },
+      { charSet: 'utf-8' },
       {
         name: 'viewport',
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'DeckForge AI',
+      },
+      {
+        name: 'description',
+        content: 'Generate beautiful AI-powered presentations in seconds.',
       },
     ],
     links: [
@@ -73,7 +75,9 @@ function NotFound() {
     <main className="min-h-[60vh] flex items-center justify-center p-8">
       <div className="text-center">
         <h1 className="text-2xl font-bold">404 — Not Found</h1>
-        <p className="mt-2 text-muted-foreground">The page you&apos;re looking for doesn&apos;t exist.</p>
+        <p className="mt-2 text-muted-foreground">
+          The page you&apos;re looking for doesn&apos;t exist.
+        </p>
       </div>
     </main>
   )
