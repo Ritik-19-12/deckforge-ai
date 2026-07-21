@@ -3,33 +3,56 @@ import { presentationIdInputSchema } from '../types/schemas'
 import { authMiddleware } from '#/middleware/auth'
 import { prisma } from '#/lib/db'
 
-export const getPresentationWithSlides = createServerFn({ method: 'GET' })
+export const getPresentationWithSlides = createServerFn({
+  method: 'GET',
+})
   .validator((data: unknown) => presentationIdInputSchema.parse(data))
   .middleware([authMiddleware])
   .handler(async ({ data, context }) => {
-    const userId = context.session.user.id
+    const userId = context?.session?.user?.id
 
-    const row = await prisma.presentation.findFirst({
-      where:{
-        id:data.id,
-        userId
+    if (!userId) {
+      throw new Error('Unauthorized')
+    }
+
+    const presentation = await prisma.presentation.findFirst({
+      where: {
+        id: data.id,
+        userId,
       },
       include: {
         slides: {
-          orderBy: { order: 'asc' },
+          orderBy: {
+            order: 'asc',
+          },
         },
       },
     })
-    return row;
+
+    if (!presentation) {
+      throw new Error('Presentation not found')
+    }
+
+    return presentation
   })
 
- export const listPresentations = createServerFn({ method: 'GET' })
+export const listPresentations = createServerFn({
+  method: 'GET',
+})
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const userId = context.session.user.id
+    const userId = context?.session?.user?.id
 
-    return await prisma.presentation.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
+    if (!userId) {
+      throw new Error('Unauthorized')
+    }
+
+    return prisma.presentation.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
     })
-})
+  })
